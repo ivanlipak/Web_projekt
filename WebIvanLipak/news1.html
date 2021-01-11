@@ -1,0 +1,177 @@
+<!DOCTYPE HTML>
+<html lang="hr">
+	<head>
+		<link rel="icon" href="favicon.jpg" type="image/x-icon">
+		<link rel="stylesheet" href="style.css">
+		<title>Arduino</title>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<meta name="description" content="arduino">
+		<meta name="keywords" content="arduino, mechatronics, uno, DIY">
+		<meta name="author" content="Ivan Lipak">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="preconnect" href="https://fonts.gstatic.com">
+		<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500&display=swap" rel="stylesheet">
+    </head>
+
+<body>
+	<header>
+	
+		<div>
+			<img class="logo-img" src="img/logo.jpg" alt="logozaheader">
+		</div>
+	<nav>
+        <a href="index.html">Home</a>
+        <a class="active" href="nov.html">News</a>
+        <a href="kon.html">Contact</a>
+        <a href="ona.html">About Us</a>
+        <a href="gal.html">Gallery</a>
+		
+    </nav>
+    </header>
+    <main>
+
+    
+    <div class="newspagetemplate">
+        <table class="newstable">
+            <tr>
+                <th class="newsth"><img class="tbpics" src="img/wrk1.jpeg" alt="workingout"></th>
+                <th class="newsth"><img class="tbpics" src="img/wrk2.jfif" alt=" workoutarduinosetup"></th>
+            </tr>
+            <tr>
+                <td>Workout</td>
+                <td>Arduino shields</td>
+            </tr>
+        </table>
+        <h2 calss="headnews">Get fit over holiday break with this push-up counter</h2>
+        <img class="newspics" src="img/wrk1.jpeg" alt="wrkoutpic">
+        <h3>Introduction: </h3>
+        <p>
+            Smart fitness IoT tools are gaining more and more traction, after Pelaton went IPO, 
+            it proves there are a lot of rooms for fitness market. Focusing on exercise not only improves market, 
+            it also improves overall health and fitness of the entire population. 
+            We are team MixPose, a Live Streaming online Yoga Class Application, and we want to build something that's related to IoT Fitness. <br>
+            While we can track cycling with Pelaton, running/walking with fitbit, 
+            some of the basic exercise such as push ups are still relatively hard to track. In this article, 
+            we are building a prototype of push up counter using kemet pyroelectric sensor and Arduino. 
+        </p>
+        <h3>Step 1: Test out the sensor</h3>
+        <p>
+            
+            We can first try with the code that was given to us by the official site from https://ec.kemet.com/blog/pyro-switch-hidden-ir-detection/
+            <p class="code">
+                int Pyro = A1;<br>
+                unsigned long PyroRead = 0;<br>
+                unsigned long IR_threshold = 198000;<br>
+                // Note: SS-430 has two pulses of 200msec per detection.<br>
+                // IR_threshold is in microsec (usec), therefore 198msec threshold<br>
+                int LED = 7;<br>
+                int Detected = LOW;<br>
+                int IR_sensed = 0;<br>
+                void setup() {<br>
+                pinMode (7, OUTPUT); //LED Connected to Pin 7<br>
+                pinMode (A1,INPUT); // IR Sensor connected to A1<br>
+                }<br>
+                void loop() {<br>
+                while ((IR_sensed < 2)){ //Break after 2 good triggers PyroRead = pulseIn(A1, HIGH); //Measure trigger point if(PyroRead > IR_threshold){ //Make sure trigger is over 198msec)<br>
+                IR_sensed++; //Mark as a good trigger<br>
+                }<br>
+                }<br>
+                if (Detected == HIGH){ // Turn LED OFF if it was previous ON<br>
+                Detected = LOW;<br>
+                digitalWrite(7, LOW);<br>
+                }<br>
+                else {<br>
+                Detected = HIGH; // Turn LED ON if it was previous OFF<br>
+                digitalWrite(7, HIGH);<br>
+                }<br>
+                PyroRead = 0; // Reset readings<br>
+                IR_sensed = 0;<br>
+                delay(1000); // Accept triggers after a second<br>
+                
+            </p>
+            <br> But as you can see, this really does not work. This is due to the sensitivity of the raw sensor. At this point you should at least able to know that sensor is connected and working correctly.<br>
+        </p>
+        <img class="newspics" src="img/wrk2.jfif" alt="wrkoutpic2">
+        <h3>Step 3: Kemet SS-430 Lens</h3>
+        <p>
+            As we've seen from previous step that the sensor is jumping all over the place due to it's sensitivity, 
+            additional lenses are needed for us to make the sensor actually work.
+            For our test, we put a piece of acrylic covering the sensor itself and running with the same code, 
+            we would receive a much more accurate reading.
+            While browsing through the discussion board, GeoNomad has made a 3D printable Lenses on TinkerCad, 
+            we can add that to this project. This is able to block all the other angles so we can focus on one single angle.
+            Now that sensor is running and we can track our push ups, we need to store our progress for our pushups, 
+            one of the easiest way is firebase. For this article we will go through using firebase through simple ways. 
+            Go through create a project like normal CP then create a database with test enviroment.
+            Next start a collection of pushups
+            We can then add our schema, which includes pushup count and timestamp.
+            When all is done, we will have our normal database setup.
+            You would also need a service account key being generated through firebase. 
+            Please do not upload this key to the repo, as it is a secure key.
+            Once it's connected, we can create a local relay on our server to make firebase transfer.
+        </p>
+        <p class="code">
+            const http = require('http'); <br>
+            const url = require('url');<br>
+            const querystring = require('querystring');<br>
+            // Import Admin SDK<br>
+            var admin = require("firebase-admin");<br>
+            var serviceAccount = require("path/to/serviceAccountKey.json");<br>
+            admin.initializeApp({<br>
+            credential: admin.credential.cert(serviceAccount),<br>
+            databaseURL: "https://databaseName.firebaseio.com"<br>
+            });<br>
+            // Get a database reference to our blog<br>
+            var db = admin.database();<br>
+            var ref = db.ref("pushup");<br>
+            ref.once("value", function(snapshot) {<br>
+            console.log(snapshot.val());<br>
+            });<br>
+            const hostname = '192.168.1.12';<br>
+            const port = 3000;<br>
+            const server = http.createServer((req, res) => {<br>
+            const queryObject = url.parse(req.url,true).query;<br>
+            var dt = new Date();<br>
+            var utcDate = dt.toUTCString();<br>
+            if(queryObject != null && queryObject.pushup != null)<br>
+            {<br>
+            console.log(queryObject.pushup);<br>
+            var newPostRef = ref.push().set({<br>
+            count: queryObject.pushup,<br>
+            time: utcDate<br>
+            });<br>
+            var postId = newPostRef.key;<br>
+            console.log(postId);<br>
+            console.log(utcDate);<br>
+            }<br>
+            //console.log(querystring.parse(queryObject));<br>
+            res.statusCode = 200;<br>
+            res.setHeader('Content-Type', 'text/plain');<br>
+            res.end('Hello World');<br>
+            });<br>
+            server.listen(port, hostname, () => {<br>
+            console.log(`Server running at http://${hostname}:${port}/`);<br>
+            });<br>
+            
+        </p>
+        <p>
+            Simply run!
+        </p>
+        <hr>
+        <div class="sources">Source: <a href="https://create.arduino.cc/projecthub">project.hub</a>
+        <br>
+        16. July 2020.
+        <hr>
+        <a href="nov.html">Back to news!</a>
+         </div>
+    </div>
+
+
+    </main>
+	<footer>
+		<div class="foot">
+			Copyright <img class="crimg" src="img/cr.png" alt=""> 2020 Ivan Lipak 
+		</div>
+	</footer>
+
+</body>

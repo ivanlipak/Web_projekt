@@ -1,0 +1,215 @@
+<!DOCTYPE HTML>
+<html lang="hr">
+	<head>
+		<link rel="icon" href="favicon.jpg" type="image/x-icon">
+		<link rel="stylesheet" href="style.css">
+		<title>Arduino</title>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<meta name="description" content="arduino">
+		<meta name="keywords" content="arduino, mechatronics, uno, DIY">
+		<meta name="author" content="Ivan Lipak">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="preconnect" href="https://fonts.gstatic.com">
+		<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500&display=swap" rel="stylesheet">
+    </head>
+
+<body>
+	<header>
+	
+		<div>
+			<img class="logo-img" src="img/logo.jpg" alt="logozaheader">
+		</div>
+	<nav>
+        <a href="index.html">Home</a>
+        <a class="active" href="nov.html">News</a>
+        <a href="kon.html">Contact</a>
+        <a href="ona.html">About Us</a>
+        <a href="gal.html">Gallery</a>
+		
+    </nav>
+    </header>
+    <main>
+
+    
+    <div class="newspagetemplate">
+        <table class="newstable">
+            <tr>
+                <th class="newsth"><img class="tbpics" src="img/news3a.png" alt="workingout"></th>
+                <th class="newsth"><img class="tbpics" src="img/news2a.jpg" alt=" workoutarduinosetup"></th>
+            </tr>
+            <tr>
+                <td>Workout</td>
+                <td>Arduino shields</td>
+            </tr>
+        </table>
+        <h2 calss="headnews">Spread some cheer with Jingle Bells on this Arduino I2S theremin</h2>
+        <img class="newspics" src="img/news3a.png" alt="wrkoutpic">
+        <h3>Starting </h3>
+        <p>
+            In this example these two parameters are changed moving two slide potentiometers, but you can modify it to read them using for example a ping sensor! In this way your theremin will be more realistic!
+
+			The two potentiometers are wired in a voltage divider fashion, so moving them you will get (from analogRead()) values in the range 0 - 1023. These values are then mapped to between the minimum and maximum frequency and the minimum and maximum volume.
+
+			The sound sent on the I2S bus is a simple sine whose frequency and amplitude is changed according to the potentiometers reading.
+        </p>
+        <h3>This code should do the needed:</h3>
+        <p>
+            
+            We can first try with the code that was given to us by the official site from https://ec.kemet.com/blog/pyro-switch-hidden-ir-detection/
+            <p class="code">
+								/* <br>
+					This code is based on Adafruit's work https://github.com/adafruit/Adafruit_ZeroI2S/blob/master/examples/tone_generator/tone_generator.ino <br>
+					<br>
+					Make an I2S Theremin using an Arduino MKRZero, an I2S DAC and two slider potentiometers!<br>
+				*/<br>
+				<br>
+				#include <I2S.h><br>
+					<br>
+				const int maxFrequency = 5000; //maximum generated frequency<br>
+				const int minFrequency = 220; //minimum generated frequency<br>
+				const int maxVolume = 100; //max volume of the generated frequency<br>
+				const int minVolume = 0; //min volume of the generated frequency<br>
+				<br>
+				const int sampleRate = 44100; //samplerate of the generated frequency<br>
+				const int wavSize = 256; //buffer size<br>
+				short sine[wavSize]; //buffer in which the sine values are stored<br>
+				<br>
+				const int frequencyPin = A0; //pin connected to the pot who determines the frequency of the signal<br>
+				const int amplitudePin = A1; //pin connected to the pot who determines the amplitude of the signal<br>
+				<br>
+				const int button = 6; //pin connected to the button to put the frequency as output<br>
+				<br>
+				void setup() {<br>
+				Serial.begin(9600); //configue the serial ort<br>
+				// Initialize the I2S transmitter.<br>
+				if (!I2S.begin(I2S_PHILIPS_MODE, sampleRate, 16)) {<br>
+					Serial.println("Failed to initialize I2S!");<br>
+					while (1);<br>
+				generateSine(); // fill buffer with sine values<br>
+				pinMode(button, INPUT_PULLUP); //put the button pin in input pullup<br>
+				}<br>
+				<br>
+				void loop() {<br>
+				if (digitalRead(button) == LOW) {<br>
+					float frequency = map(analogRead(frequencyPin), 0, 1023, minFrequency, maxFrequency); //map frequency<br>
+					int amplitude = map(analogRead(amplitudePin), 0, 1023, minVolume, maxVolume); //map amplitude<br>
+					playWave(frequency, 0.1, amplitude); //play sound<br>
+					//print values on serial<br>
+					Serial.print("Frequency = ");<br>
+					Serial.println(frequency);<br>
+					Serial.print("Amplitude = ");<br>
+					Serial.println(amplitude);<br>
+				}<br>
+				}<br>
+
+				void generateSine() {<br>
+				for (int i = 0; i < wavSize; ++i) {<br>
+					sine[i] = ushort(float(100) * sin(2.0 * PI * (1.0 / wavSize) * i)); //100 is used to not have small numbers<br>
+				}<br>
+				}<br>
+				<br>
+				void playWave(float frequency, float seconds, int amplitude) {<br>
+				// Play back the provided waveform buffer for the specified<br>
+				// amount of seconds.<br>
+				// First calculate how many samples need to play back to run<br>
+				// for the desired amount of seconds.<br>
+				unsigned int iterations = seconds * sampleRate;<br>
+				// Then calculate the 'speed' at which we move through the wave<br>
+				// buffer based on the frequency of the tone being played.<br>
+				float delta = (frequency * wavSize) / float(sampleRate);<br>
+				// Now loop through all the samples and play them, calculating t<br>he
+				// position within the wave buffer for each moment in time.<br>
+				for (unsigned int i = 0; i < iterations; ++i) {<br>
+					short pos = (unsigned int)(i * delta) % wavSize;<br>
+					short sample = amplitude * sine[pos];<br>
+					// Duplicate the sample so it's sent to both the left and right channel.<br>
+					// It appears the order is right channel, left channel if you want to write<br>
+					// stereo sound.<br>
+					while (I2S.availableForWrite() < 2);<br>
+					<br>
+					I2S.write(sample);<br>
+					I2S.write(sample);<br>
+				}<br>
+				}<br>
+
+
+            </p>
+            <br> But as you can see, this really does not work. This is due to the sensitivity of the raw sensor. At this point you should at least able to know that sensor is connected and working correctly.<br>
+        </p>
+        <img class="newspics" src="img/news2b.jpg" alt="wrkoutpic2">
+        <h3>More stuff to do:</h3>
+        <p>
+            For our test, we put a piece of acrylic covering the sensor itself and running with the same code, 
+            we would receive a much more accurate reading.
+            While browsing through the discussion board, GeoNomad has made a 3D printable Lenses on TinkerCad, 
+            we can add that to this project. This is able to block all the other angles so we can focus on one single angle.
+            Now that sensor is running and we can track our push ups, we need to store our progress for our pushups, 
+            one of the easiest way is firebase. For this article we will go through using firebase through simple ways. 
+            Go through create a project like normal CP then create a database with test enviroment.
+            Next start a collection of pushups
+            We can then add our schema, which includes pushup count and timestamp.
+            When all is done, we will have our normal database setup.
+            You would also need a service account key being generated through firebase. 
+            Please do not upload this key to the repo, as it is a secure key.
+            Once it's connected, we can create a local relay on our server to make firebase transfer.
+        </p>
+        <p class="code">
+            // Import Admin SDK<br>
+            var admin = require("firebase-admin");<br>
+            var serviceAccount = require("path/to/serviceAccountKey.json");<br>
+            admin.initializeApp({<br>
+            credential: admin.credential.cert(serviceAccount),<br>
+            databaseURL: "https://databaseName.firebaseio.com"<br>
+            });<br>
+            // Get a database reference to our blog<br>
+            var db = admin.database();<br>
+            var ref = db.ref("pushup");<br>
+            ref.once("value", function(snapshot) {<br>
+            console.log(snapshot.val());<br>
+            });<br>
+            const hostname = '192.168.1.12';<br>
+            const port = 3000;<br>
+            const server = http.createServer((req, res) => {<br>
+            const queryObject = url.parse(req.url,true).query;<br>
+            var dt = new Date();<br>
+            var utcDate = dt.toUTCString();<br>
+            if(queryObject != null && queryObject.pushup != null)<br>
+            {<br>
+            console.log(queryObject.pushup);<br>
+            var newPostRef = ref.push().set({<br>
+            count: queryObject.pushup,<br>
+            time: utcDate<br>
+            });<br>
+            var postId = newPostRef.key;<br>
+            console.log(postId);<br>
+            console.log(utcDate);<br>
+            }<br>
+            //console.log(querystring.parse(queryObject));<br>
+            res.statusCode = 200;<br>
+            res.setHeader('Content-Type', 'text/plain');<br>
+            res.end('Hello World');<br>
+            });<br>
+
+            
+        </p>
+        <p>
+         Run it!
+        </p>
+        <hr>
+        <div class="sources">Source: <a href="https://create.arduino.cc/projecthub">project.hub</a>
+        <br>
+        16. July 2020.
+        <hr>
+        <a href="nov.html">Back to news!</a>
+         </div>
+    </div>
+
+
+    </main>
+	<footer>
+		<div class="foot">
+			Copyright <img class="crimg" src="img/cr.png" alt=""> 2020 Ivan Lipak 
+		</div>
+	</footer>
+
+</body>
